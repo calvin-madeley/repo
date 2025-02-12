@@ -1,3 +1,9 @@
+-- Set the current database to RECRUITMENT_DB
+USE DATABASE RECRUITMENT_DB;
+
+-- Set the current schema to candidate_00139
+USE SCHEMA candidate_00139;
+
 -- Create or replace a table to store flight data with specific columns
 CREATE OR REPLACE TABLE FLIGHT_RAW (
     TRANSACTIONID VARCHAR(250),
