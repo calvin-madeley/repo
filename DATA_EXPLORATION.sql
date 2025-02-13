@@ -3,7 +3,7 @@
 USE DATABASE "RECRUITMENT_DB";
 
 -- Set the current schema to candidate_00139
-USE SCHEMA "candidate_00139";
+USE SCHEMA "CANDIDATE_00139";
 
 -- Create or replace a transient table to hold raw flight data
 CREATE OR REPLACE TRANSIENT TABLE "FLIGHTS_RAW" (TXT VARCHAR);

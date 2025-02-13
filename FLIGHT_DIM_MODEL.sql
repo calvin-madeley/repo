@@ -2,7 +2,7 @@
 USE DATABASE "RECRUITMENT_DB";
 
 -- Set the current schema to candidate_00139
-USE SCHEMA "candidate_00139";
+USE SCHEMA "CANDIDATE_00139";
 
 -- Create or replace a table to store airport information
 CREATE OR REPLACE TABLE "AIRPORT_DIM" (
