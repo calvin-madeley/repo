@@ -44,19 +44,19 @@ This project involves ingesting flight data from a compressed `.gz` file (`fligh
    - `'T'`, `'True'`, `1` for TRUE
    - `'F'`, `'False'`, `0` for FALSE
 
-   These should be standardized to `'TRUE'` and `'FALSE'` for consistency.
+   These should be standardized to `1` and `0` for consistency.
 
 ## Data Transformation Logic
 
 ### Cleaning Logic for Data Quality Issues
 
 1. **AIRPORTNAME (Cleaning location information)**:
-   - Use `REGEXP_REPLACE` to remove the location information from `ORIGAIRPORTNAME` and `DESTAIRPORTNAME`, leaving only the airport name.
-   - Example: `REGEXP_REPLACE(ORIGAIRPORTNAME, '[:].*', '')`
+   - Use `TRIM` and `SPLIT` to remove the location information from `ORIGAIRPORTNAME` and `DESTAIRPORTNAME`, leaving only the airport name.
+   - Example: `TRIM(SPLIT_PART("DESTAIRPORTNAME", ':', 2))`
 
 2. **AIRLINENAME (Cleaning airline code and comments)**:
-   - Use `REGEXP_REPLACE` to remove any airline code and extra comments from the `AIRLINENAME` field.
-   - Example: `REGEXP_REPLACE(AIRLINENAME, '(:\s*\w+)?', '')`
+   - Use `TRIM` and `SPLET` to remove any airline code and extra comments from the `AIRLINENAME` field.
+   - Example: `TRIM(SPLIT_PART(FR."AIRLINENAME", ':', 1)) AS "AIRLINENAME"`
 
 3. **TAILNUM (Removing "UNKNOW" and Padding)**:
    - Replace `"UNKNOW"` with `NULL`.
@@ -65,15 +65,15 @@ This project involves ingesting flight data from a compressed `.gz` file (`fligh
 
 4. **CRSDEPTIME (Fix malformed 24-hour time)**:
    - Replace any instances of `2400` with `0000` in `CRSDEPTIME`.
-   - Example: `REPLACE(CRSDEPTIME, '2400', '0000')`
+   - Example: `COALESCE(TRY_TO_TIME(LPAD("DEPTIME", 4, '0') || '00','HH24MISS'), CASE WHEN "DEPTIME" = '2400' THEN '00:00:00'::TIME ELSE NULL END)`
 
 5. **DIVERTED and CANCELLED (Standardizing TRUE/FALSE values)**:
-   - Normalize the entries for both `DIVERTED` and `CANCELLED` to either `'TRUE'` or `'FALSE'`.
+   - Normalize the entries for both `DIVERTED` and `CANCELLED` to either `'1'` or `'0'`.
    - Example:
      ```sql
      CASE
-         WHEN DIVERTED IN ('T', 'True', '1') THEN 'TRUE'
-         WHEN DIVERTED IN ('F', 'False', '0') THEN 'FALSE'
+         WHEN DIVERTED IN ('T', 'True', '1') THEN '1'
+         WHEN DIVERTED IN ('F', 'False', '0') THEN '0'
          ELSE 'UNKNOWN'
      END
      ```
@@ -82,13 +82,15 @@ This project involves ingesting flight data from a compressed `.gz` file (`fligh
 
 1. **NEXTDAYARR**:
    - The `NEXTDAYARR` column is created to indicate whether the arrival time (`ARRTIME`) is on the next day compared to the departure time (`DEPTIME`).
-   - This can be determined by comparing the times and checking if the arrival time is earlier than the departure time, indicating that the flight arrived on the following day.
+   - This can be determined by comparing the times and checking if the arrival time is earlier than the departure time, or `ACTUALELAPSEDTIME` is greater than 1440 minutes (24 hours), indicating that the flight arrived on the following day.
    
    ```sql
-   CASE
-       WHEN ARRTIME < DEPTIME THEN 'TRUE'
-       ELSE 'FALSE'
-   END AS NEXTDAYARR
+        CASE 
+            WHEN "ACTUALELAPSEDTIME" IS NULL THEN 0
+            WHEN "ACTUALELAPSEDTIME" >= 1440 THEN 1
+            WHEN "ARRTIME" > "DEPTIME" THEN 0
+            ELSE 1
+        END AS "NEXTDAYARR"
    ```
 
 2. **DEPDELAYGT15**:
