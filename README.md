@@ -1,7 +1,3 @@
-Certainly! Below is an updated version of the `README.md` file with a focus on the **data quality issues** identified in the dataset and the logic for the creation of the additional columns `NEXTDAYARR` and `DEPDELAYGT15`.
-
----
-
 # Flight Data Ingestion to Snowflake
 
 ## Overview
